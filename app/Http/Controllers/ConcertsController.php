@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Concert;
+use App\Models\Concert;
 use Illuminate\Http\Request;
 
 class ConcertsController extends Controller

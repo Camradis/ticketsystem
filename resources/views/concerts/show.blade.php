@@ -8,10 +8,10 @@
     {{ $concert->subtitle }}
 </h2>
 <p>
-    {{ $concert->date->format('F j, Y') }}
+    {{ $concert->formatted_date }}
 </p>
 <p>
-    Doors at {{ $concert->date->format('g:ia') }}
+    Doors at {{ $concert->formatted_start_time }}
 </p>
 <p>
     Price: {{ number_format($concert->ticket_price / 100, 2) }}
