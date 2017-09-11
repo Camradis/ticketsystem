@@ -36,6 +36,6 @@ class PurchaseTicketsTest extends TestCase
 
         $this->assertNotNull($order);
 
-        $this->assertEquals(3, $order->tickets->count());
+        $this->assertEquals(3, $order->tickets()->count());
     }
 }
