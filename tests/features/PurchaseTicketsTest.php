@@ -12,12 +12,17 @@ class PurchaseTicketsTest extends TestCase
 {
     use DatabaseMigrations;
 
+    protected function setUp()
+    {
+        parent::setUp();
+
+        $this->paymentGateway = new FakePaymentGateway;
+
+        $this->app->instance(PaymentGateway::class, $this->paymentGateway);
+    }
+
     public function testCustomerCanPurchaseConcertTicket()
     {
-        $paymentGateway = new FakePaymentGateway;
-
-        $this->app->instance(PaymentGateway::class, $paymentGateway);
-
         $concert = factory(Concert::class)->create([
             'ticket_price' => 3250,
         ]);
@@ -25,17 +30,31 @@ class PurchaseTicketsTest extends TestCase
         $this->json('POST', "/concerts/{$concert->id}/orders", [
             'email'  => 'andy@example.com',
             'ticket_quantity' => 3,
-            'payment_token' => $paymentGateway->getValidTestToken(),
+            'payment_token' => $this->paymentGateway->getValidTestToken(),
         ]);
 
         $this->assertResponseStatus(201);
 
-        $this->assertEquals(9750, $paymentGateway->totalCharges());
+        $this->assertEquals(9750, $this->paymentGateway->totalCharges());
 
         $order = $concert->orders()->where('email', 'andy@example.com')->first();
 
         $this->assertNotNull($order);
 
         $this->assertEquals(3, $order->tickets()->count());
+    }
+
+    public function testEmailIsRequiredToPurchaseTickets()
+    {
+        $concert = factory(Concert::class)->create();
+
+        $this->json('POST', "/concerts/{$concert->id}/orders", [
+            'ticket_quantity' => 3,
+            'payment_token' => $this->paymentGateway->getValidTestToken(),
+        ]);
+
+        $this->assertResponseStatus(422);
+
+        $this->assertArrayHasKey('email', $this->decodeResponseJson());
     }
 }
