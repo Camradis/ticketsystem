@@ -40,3 +40,15 @@ $factory->define(App\Models\Concert::class, function (Faker\Generator $faker) {
         'additional_information' => 'Fot tickets, call (555) 555-5555.'
     ];
 });
+
+$factory->state(App\Models\Concert::class, 'published', function (Faker\Generator $faker) {
+    return [
+        'published_at' => Carbon::parse('-1 week'),
+    ];
+});
+
+$factory->state(App\Models\Concert::class, 'unpublished', function (Faker\Generator $faker) {
+    return [
+        'published_at' => null,
+    ];
+});

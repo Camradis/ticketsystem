@@ -20,7 +20,7 @@ class ViewConcertListingTest extends TestCase
 
         // Create a concert
 
-        $concert = factory(Concert::class)->create([
+        $concert = factory(Concert::class)->states('published')->create([
             'date' => Carbon::parse('December 13, 2016 20:00:00'),
             'published_at' => Carbon::parse('December 23, 2016 20:00:00')
         ]);
@@ -47,9 +47,7 @@ class ViewConcertListingTest extends TestCase
 
     public function testUnpublishedConcertViewing()
     {
-        $concert = factory(Concert::class)->create([
-           'published_at' => null,
-        ]);
+        $concert = factory(Concert::class)->states('unpublished')->create();
 
         $this->get('/concerts/'.$concert->id);
 
