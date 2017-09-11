@@ -38,12 +38,15 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $exception
-     * @return \Illuminate\Http\Response
+     * @param \Illuminate\Http\Request $request
+     * @param Exception $exception
+     * @return \Symfony\Component\HttpFoundation\Response
+     * @throws Exception
      */
     public function render($request, Exception $exception)
     {
+        throw $exception;
+
         return parent::render($request, $exception);
     }
 
