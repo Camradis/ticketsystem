@@ -14,7 +14,7 @@
     Doors at {{ $concert->formatted_start_time }}
 </p>
 <p>
-    Price: {{ number_format($concert->ticket_price / 100, 2) }}
+    Price: {{ $concert->ticket_price_in_dollars }}
 </p>
 <p>
     Venue: {{ $concert->venue }}

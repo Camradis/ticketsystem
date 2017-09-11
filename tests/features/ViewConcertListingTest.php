@@ -21,7 +21,8 @@ class ViewConcertListingTest extends TestCase
         // Create a concert
 
         $concert = factory(Concert::class)->create([
-            'date' => Carbon::parse('December 13, 2016 20:00:00')
+            'date' => Carbon::parse('December 13, 2016 20:00:00'),
+            'published_at' => Carbon::parse('December 23, 2016 20:00:00')
         ]);
 
         // Act
@@ -42,5 +43,16 @@ class ViewConcertListingTest extends TestCase
         $this->see('The Mosh Pit');
         $this->see('123 Example Lane');
         $this->see('Laraville, ON 17916');
+    }
+
+    public function testUnpublishedConcertViewing()
+    {
+        $concert = factory(Concert::class)->create([
+           'published_at' => null,
+        ]);
+
+        $this->get('/concerts/'.$concert->id);
+
+        $this->assertResponseStatus(404);
     }
 }
