@@ -98,6 +98,28 @@ class PurchaseTicketsTest extends TestCase
         $this->assertValidationError('email');
     }
 
+    public function testCannotPurchaseMoreTicketsThanRemain()
+    {
+        $concert = factory(Concert::class)->states('published')->create();
+
+        $concert->addTickets(50);
+
+        $this->orderTickets([
+            'email'  => 'andy@example.com',
+            'ticket_quantity' => 51,
+            'payment_token' => $this->paymentGateway->getValidTestToken(),
+        ], $concert);
+
+        $this->assertResponseStatus(422);
+
+        $order = $concert->orders()->where('email', 'andy@example.com')->first();
+
+        $this->assertNull($order);
+        $this->assertEquals(0, $this->paymentGateway->totalCharges());
+
+        $this->assertEquals(0, $concert->ticketsRemaining());
+    }
+
     public function testEmailIsValidToPurchaseTickets()
     {
         $this->orderTickets([
