@@ -26,7 +26,7 @@ class PurchaseTicketsTest extends TestCase
         if ($specified_concert){
             $concert = $specified_concert;
         } else {
-            $concert = factory(Concert::class)->create();
+            $concert = factory(Concert::class)->states('published')->create();
         }
 
         $this->json('POST', "/concerts/{$concert->id}/orders", $params);
@@ -38,11 +38,9 @@ class PurchaseTicketsTest extends TestCase
         $this->assertArrayHasKey($field, $this->decodeResponseJson());
     }
 
-    public function testCustomerCanPurchaseConcertTicket()
+    public function testCustomerCanPurchasePublishedConcertTicket()
     {
-        $concert = factory(Concert::class)->create([
-            'ticket_price' => 3250,
-        ]);
+        $concert = factory(Concert::class)->states('published')->create([ 'ticket_price' => 3250 ]);
 
         $this->orderTickets([
             'email'  => 'andy@example.com',
@@ -56,6 +54,38 @@ class PurchaseTicketsTest extends TestCase
         $order = $concert->orders()->where('email', 'andy@example.com')->first();
         $this->assertNotNull($order);
         $this->assertEquals(3, $order->tickets()->count());
+    }
+
+    public function testCannotPurchaseTicketsToUnpublishedConcerts()
+    {
+        $concert = factory(Concert::class)->states('unpublished')->create([ 'ticket_price' => 3250 ]);
+
+        $this->orderTickets([
+            'email'  => 'andy@example.com',
+            'ticket_quantity' => 3,
+            'payment_token' => $this->paymentGateway->getValidTestToken(),
+        ], $concert);
+
+        $this->assertResponseStatus(404);
+        $this->assertEquals(0, $concert->orders()->count());
+        $this->assertEquals(0, $this->paymentGateway->totalCharges());
+    }
+
+    public function testAnOrderIsNotCreatedWhenFails()
+    {
+        $concert = factory(Concert::class)->states('published')->create([ 'ticket_price' => 3250 ]);
+
+        $this->orderTickets([
+            'email'  => 'andy@example.com',
+            'ticket_quantity' => 3,
+            'payment_token' => 'invalid-payment-token',
+        ], $concert);
+
+        $this->assertResponseStatus(422);
+
+        $order = $concert->orders()->where('email', 'andy@example.com')->first();
+
+        $this->assertNull($order);
     }
 
     public function testEmailIsRequiredToPurchaseTickets()
