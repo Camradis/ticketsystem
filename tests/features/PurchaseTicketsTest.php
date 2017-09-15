@@ -76,6 +76,7 @@ class PurchaseTicketsTest extends TestCase
     public function testAnOrderIsNotCreatedWhenFails()
     {
         $concert = factory(Concert::class)->states('published')->create([ 'ticket_price' => 3250 ]);
+        $concert->addTickets(20);
 
         $this->orderTickets([
             'email'  => 'andy@example.com',
