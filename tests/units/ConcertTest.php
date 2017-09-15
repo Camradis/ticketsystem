@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Exceptions\NotEnoughTicketsException;
 
 class ConcertTest extends TestCase
 {
@@ -84,9 +85,11 @@ class ConcertTest extends TestCase
         $this->assertEquals(20, $concert->ticketsRemaining());
     }
 
-    public function testCanOrderConcertTicket()
+    public function testCanOrderConcertTickets()
     {
         $concert = factory(Concert::class)->create();
+
+        $concert->addTickets(3);
 
         $order = $concert->orderTickets('jane@example.com' , 3);
 
@@ -94,4 +97,53 @@ class ConcertTest extends TestCase
         $this->assertEquals(3, $order->tickets->count());
     }
 
+    public function testTryingToPurchaseMoreTicketsThanRemainThrowsAnException()
+    {
+        $concert = factory(Concert::class)->create();
+        $concert->addTickets(10);
+
+        try {
+
+            $concert->orderTickets('andy@example.com' , 11);
+
+        } catch (NotEnoughTicketsException $e) {
+
+            $order = $concert->orders()->where('email', 'andy@example.com')->first();
+
+            $this->assertNull($order);
+            $this->assertEquals(10, $concert->ticketsRemaining());
+
+            return;
+        }
+
+        $this->fail("Order successed even through where were not enough tickets remaining");
+    }
+
+    public function testCannotOrderTicketsThatAlreadyBeenPurchased()
+    {
+        $concert = factory(Concert::class)->create();
+        $concert->addTickets(10);
+
+        $concert->orderTickets('andy@example.com', 8);
+
+
+        try {
+
+            $concert->orderTickets('endigo@example.com', 3);
+
+        } catch (NotEnoughTicketsException $e) {
+
+            $andyOrder = $concert->orders()->where('email', 'andy@example.com')->first();
+            $endigoOrder = $concert->orders()->where('email', 'endigo@example.com')->first();
+
+            $this->assertEquals(8, $andyOrder->tickets()->count());
+            $this->assertNotNull($andyOrder);
+            $this->assertNull($endigoOrder);
+
+            $this->assertEquals(2, $concert->ticketsRemaining());
+
+            return;
+        }
+
+    }
 }
