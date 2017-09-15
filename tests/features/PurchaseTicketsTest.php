@@ -38,7 +38,7 @@ class PurchaseTicketsTest extends TestCase
         $this->assertArrayHasKey($field, $this->decodeResponseJson());
     }
 
-    public function testCustomerCanPurchasePublishedConcertTicket()
+    public function testCustomerCanPurchasePublishedConcertTickets()
     {
         $concert = factory(Concert::class)->states('published')->create([ 'ticket_price' => 3250 ]);
         $concert->addTickets(4);
@@ -50,11 +50,16 @@ class PurchaseTicketsTest extends TestCase
         ], $concert);
 
         $this->assertResponseStatus(201);
-        $this->assertEquals(9750, $this->paymentGateway->totalCharges());
 
-        $order = $concert->orders()->where('email', 'andy@example.com')->first();
-        $this->assertNotNull($order);
-        $this->assertEquals(3, $order->tickets()->count());
+        $this->seeJsonSubset([
+            'email' => 'andy@example.com',
+            'ticket_quantity' => 3,
+            'amount' => 9750,
+        ]);
+
+        $this->assertEquals(9750, $this->paymentGateway->totalCharges());
+        $this->assertTrue($concert->hasOrderFor('andy@example.com'));
+        $this->assertEquals(3 , $concert->ordersFor('andy@example.com')->first()->ticketQuantity());
     }
 
     public function testCannotPurchaseTicketsToUnpublishedConcerts()
