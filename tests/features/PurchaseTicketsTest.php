@@ -168,4 +168,22 @@ class PurchaseTicketsTest extends TestCase
 
         $this->assertValidationError('payment_token');
     }
+
+    public function testPurchaseTicketsThatAnotherCustomerTryingToPurchase()
+    {
+        $concert = factory(Concert::class)->states('published')->create();
+        $concert->addTickets(3);
+
+        $this->orderTickets([
+            'email' => 'personA@example.com',
+            'ticket_quantity' => 0,
+            'payment_token' => $this->paymentGateway->getValidTestToken(),
+        ]);
+
+        $this->orderTickets([
+            'email' => 'personB@example.com',
+            'ticket_quantity' => 0,
+            'payment_token' => $this->paymentGateway->getValidTestToken(),
+        ]);
+    }
 }

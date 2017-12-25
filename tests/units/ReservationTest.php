@@ -1,11 +1,10 @@
 <?php
 
-use App\Models\Concert;
 use App\Models\Reservation;
+use App\Models\Ticket;
 use Illuminate\Foundation\Testing\WithoutMiddleware;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use App\Exceptions\NotEnoughTicketsException;
 
 class ReservationTest extends TestCase
 {
@@ -13,10 +12,16 @@ class ReservationTest extends TestCase
 
     public function testCalculateTotalCost()
     {
-        $concert = factory(Concert::class)->states('published')->create(['ticket_price' => 1200]);
-        $concert->addTickets(3);
+        //$concert = factory(Concert::class)->states('published')->create(['ticket_price' => 1200]);
+        //$concert->addTickets(3);
+        //
+        //$tickets = $concert->findTickets(3);
 
-        $tickets = $concert->findTickets(3);
+        $tickets = collect([
+            (object) ['price' => 1200],
+            (object) ['price' => 1200],
+            (object) ['price' => 1200],
+        ]);
 
         $reservation = new Reservation($tickets);
 
