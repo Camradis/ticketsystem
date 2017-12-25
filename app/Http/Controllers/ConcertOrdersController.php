@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Billing\PaymentFailedException;
 use App\Exceptions\NotEnoughTicketsException;
 use App\Models\Order;
+use App\Models\Reservation;
 use Illuminate\Http\Request;
 use App\Billing\PaymentGateway;
 use App\Models\Concert;
@@ -60,15 +61,16 @@ class ConcertOrdersController extends Controller
             //Find some tickets
             $tickets = $concert->findTickets($request->input('ticket_quantity'));
 
+            $reservation = new Reservation($tickets);
+
             //Charge the customer for the tickets
-            $this->paymentGateway->charge(
-                $request->input('ticket_quantity') * $concert->ticket_price,
+            $this->paymentGateway->charge($reservation->totalCost(),
                 $request->input('payment_token')
             );
 
             //Create an order for those tickets
             //$order = $concert->createOrder($request->input('email'), $tickets);
-            $order = Order::forTickets($tickets, $request->input('email'));
+            $order = Order::forTickets($tickets, $request->input('email'), $reservation->totalCost());
 
             return response()->json($order, 201);
 
