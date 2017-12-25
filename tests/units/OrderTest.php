@@ -12,16 +12,20 @@ class OrderTest extends TestCase
 {
     use DatabaseMigrations;
 
-    /*private function orderTickets($params, $specified_concert = null)
+    public function testCreatingOrderFromTicketsAndEmail()
     {
-        if ($specified_concert){
-            $concert = $specified_concert;
-        } else {
-            $concert = factory(Concert::class)->states('published')->create();
-        }
+        $concert = factory(Concert::class)->states('published')->create(['ticket_price' => 1200]);
+        $concert->addTickets(5);
 
-        $this->json('POST', "/concerts/{$concert->id}/orders", $params);
-    }*/
+        $this->assertEquals(5, $concert->ticketsRemaining());
+
+        $order= Order::forTickets($concert->findTickets(3), 'andy@example.com');
+
+        $this->assertEquals('andy@example.com', $order->email);
+        $this->assertEquals(3, $order->ticketQuantity());
+        $this->assertEquals(2, $concert->ticketsRemaining());
+        $this->assertEquals(3600, $order->amount);
+    }
 
     public function testTicketsAreReleasedWhenOrderIsCancelled()
     {

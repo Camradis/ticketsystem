@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Billing\PaymentFailedException;
 use App\Exceptions\NotEnoughTicketsException;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Billing\PaymentGateway;
 use App\Models\Concert;
@@ -40,7 +41,9 @@ class ConcertOrdersController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param Request $request
+     * @param $concertId
+     *
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request, $concertId)
@@ -54,26 +57,24 @@ class ConcertOrdersController extends Controller
         ]);
 
         try {
+            //Find some tickets
+            $tickets = $concert->findTickets($request->input('ticket_quantity'));
 
-            $order = $concert->orderTickets(
-                $request->input('email'),
-                $request->input('ticket_quantity')
-            );
-
+            //Charge the customer for the tickets
             $this->paymentGateway->charge(
                 $request->input('ticket_quantity') * $concert->ticket_price,
                 $request->input('payment_token')
             );
 
+            //Create an order for those tickets
+            //$order = $concert->createOrder($request->input('email'), $tickets);
+            $order = Order::forTickets($tickets, $request->input('email'));
+
             return response()->json($order, 201);
 
         } catch (PaymentFailedException $e) {
-
-            $order->cancel();
-
             return response()->json([], 422);
         } catch (NotEnoughTicketsException $e) {
-
             return response()->json([], 422);
         }
     }

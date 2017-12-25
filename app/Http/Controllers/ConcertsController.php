@@ -14,7 +14,9 @@ class ConcertsController extends Controller
      */
     public function index()
     {
-        //
+        $concerts = Concert::whereNotNull('published_at')->get();
+
+        return $concerts;
     }
 
     /**
