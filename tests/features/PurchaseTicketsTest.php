@@ -171,19 +171,31 @@ class PurchaseTicketsTest extends TestCase
 
     public function testPurchaseTicketsThatAnotherCustomerTryingToPurchase()
     {
-        $concert = factory(Concert::class)->states('published')->create();
+        $concert = factory(Concert::class)->states('published')->create([
+            'ticket_price' => 1200,
+        ]);
+
         $concert->addTickets(3);
+
+        $this->paymentGateway->beforeFirstCharge(function () use ($concert) {
+            $this->orderTickets([
+                'email' => 'personB@example.com',
+                'ticket_quantity' => 1,
+                'payment_token' => $this->paymentGateway->getValidTestToken(),
+            ], $concert);
+            $this->assertResponseStatus(422);
+            $this->assertFalse($concert->hasOrderFor('personB@example.com'));
+            $this->assertEquals(0, $this->paymentGateway->totalCharges());
+        });
 
         $this->orderTickets([
             'email' => 'personA@example.com',
-            'ticket_quantity' => 0,
+            'ticket_quantity' => 3,
             'payment_token' => $this->paymentGateway->getValidTestToken(),
-        ]);
+        ], $concert);
 
-        $this->orderTickets([
-            'email' => 'personB@example.com',
-            'ticket_quantity' => 0,
-            'payment_token' => $this->paymentGateway->getValidTestToken(),
-        ]);
+        $this->assertEquals(3600, $this->paymentGateway->totalCharges());
+        $this->assertTrue($concert->hasOrderFor('personA@example.com'));
+        $this->assertEquals(3 , $concert->ordersFor('personA@example.com')->first()->ticketQuantity());
     }
 }

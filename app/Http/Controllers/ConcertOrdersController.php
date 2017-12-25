@@ -59,7 +59,7 @@ class ConcertOrdersController extends Controller
 
         try {
             //Find some tickets
-            $tickets = $concert->findTickets($request->input('ticket_quantity'));
+            $tickets = $concert->reserveTickets($request->input('ticket_quantity'));
 
             $reservation = new Reservation($tickets);
 

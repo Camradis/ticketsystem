@@ -13,7 +13,15 @@ class TicketTest extends TestCase
 {
     use DatabaseMigrations;
 
-    public function testTicketHasBennReleased()
+    public function testTicketHasBeenReserved()
+    {
+        $ticket = factory(Ticket::class)->create();
+        $this->assertNull($ticket->reserved_at);
+        $ticket->reserve();
+        $this->assertNotNull($ticket->fresh()->reserved_at);
+    }
+
+    public function testTicketHasBeenReleased()
     {
         $concert = factory(Concert::class)->create();
         $concert->addTickets(1);

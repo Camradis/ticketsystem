@@ -40,6 +40,13 @@ $factory->define(App\Models\Concert::class, function (Faker\Generator $faker) {
         'additional_information' => 'Fot tickets, call (555) 555-5555.'
     ];
 });
+$factory->define(App\Models\Ticket::class, function (Faker\Generator $faker) {
+    return [
+        'concert_id' => function() {
+            return factory(App\Models\Concert::class)->create()->id;
+        },
+    ];
+});
 
 $factory->state(App\Models\Concert::class, 'published', function (Faker\Generator $faker) {
     return [
